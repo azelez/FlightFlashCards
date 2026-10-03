@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Flight Checkride Flash Cards</title>
+    <link rel="icon" type="image/png" href="app_icon.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <!-- Top Navigation / App Header -->
+      <header class="topbar">
+        <div class="brand">
+          <img src="app_icon.png" alt="Flight Flashcards" class="brand-logo" />
+          <div class="brand-text">
+            <p class="eyebrow">Pilot study tool</p>
+            <h1>Flight Flashcards</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="carModeToggle" class="mode-toggle-button" aria-label="Toggle Car Mode">
+            <span class="mode-icon">🚗</span>
+            <span id="carModeToggleText" class="mode-label">Car Mode: OFF</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Primary Tab Navigation -->
+      <nav class="app-nav" aria-label="Main Navigation">
+        <button id="tabStudy" class="nav-tab active" data-tab="studyTab">
+          <span class="tab-icon">🗂️</span>
+          <span class="tab-text">Study Deck</span>
+        </button>
+        <button id="tabAdd" class="nav-tab" data-tab="addTab">
+          <span class="tab-icon">➕</span>
+          <span class="tab-text">Add Cards</span>
+        </button>
+        <button id="tabReminders" class="nav-tab" data-tab="remindersTab">
+          <span class="tab-icon">⏰</span>
+          <span class="tab-text">Reminders</span>
+        </button>
+      </nav>
+
+      <!-- ================= TAB 1: STUDY DECK ================= -->
+      <main id="studyTab" class="tab-content active">
+        <!-- Voice Assistant / Car Mode Live Banner -->
+        <section id="carModeBanner" class="car-mode-banner hidden">
+          <div class="car-banner-header">
+            <div class="voice-indicator">
+              <span class="mic-pulse" id="micPulse"></span>
+              <span class="voice-icon">🎙️</span>
+              <div class="voice-text">
+                <strong id="voiceStatusText">Listening for commands...</strong>
+                <span id="voiceSubStatus">Say "Flip", "Next", "Previous", or "Repeat"</span>
+              </div>
+            </div>
+            <span class="car-live-badge">CAR MODE ACTIVE</span>
+          </div>
+          <div id="lastCommandBadge" class="last-command-pill hidden">
+            <span>Heard: </span><strong id="lastCommandText">"Flip"</strong>
+          </div>
+        </section>
+
+        <div class="app-layout">
+          <!-- Sidebar: Stats & Study Focus -->
+          <aside class="sidebar">
+            <section class="panel stats-panel">
+              <h2>Session stats</h2>
+              <div class="stat-grid">
+                <div class="stat-card">
+                  <span class="label">Cards</span>
+                  <strong id="totalCardsStat">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span class="label">Known</span>
+                  <strong id="knownStat">0</strong>
+                </div>
+                <div class="stat-card">
+                  <span class="label">Review</span>
+                  <strong id="reviewStat">0</strong>
+                </div>
+              </div>
+              <div class="stats-footer">
+                <button id="shuffleButton" class="secondary-button full-width">🔀 Shuffle deck</button>
+              </div>
+            </section>
+
+            <section class="panel filter-panel">
+              <div class="panel-header-row">
+                <h2>Study focus</h2>
+              </div>
+              <div id="categoryFilters" class="filter-list"></div>
+            </section>
+          </aside>
+
+          <!-- Main Flashcard Viewer -->
+          <section class="main-panel">
+            <div class="panel card-panel">
+              <div class="card-meta">
+                <span id="cardCategory" class="tag">Category</span>
+                <span id="cardCounter" class="card-count">1 / 1</span>
+              </div>
+
+              <div class="study-controls">
+                <label class="topic-picker" for="topicSelect">
+                  <span>Practice topic</span>
+                  <select id="topicSelect"></select>
+                </label>
+                <label class="mode-picker" for="studyModeSelect">
+                  <span>Study mode</span>
+                  <select id="studyModeSelect">
+                    <option value="deck">Core deck</option>
+                    <option value="scenario">Checkride scenarios</option>
+                    <option value="custom">Custom added cards</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="scenario-banner" id="scenarioBanner">
+                <strong>Checkride scenario section:</strong> 25 realistic private pilot oral/practical scenarios to practice before the final exam.
+              </div>
+
+              <!-- Interactive Card -->
+              <div id="flashcard" class="flashcard" tabindex="0" role="button" aria-label="Flashcard. Tap or say Flip to view answer.">
+                <div class="flashcard-inner">
+                  <div class="flashcard-face flashcard-front">
+                    <div class="face-badge">
+                      <span class="label">Question</span>
+                      <button id="speakQuestionBtn" class="speak-btn" title="Read Question" aria-label="Read Question aloud">🔊</button>
+                    </div>
+                    <h3 id="cardQuestion">Loading flashcards...</h3>
+                  </div>
+                  <div class="flashcard-face flashcard-back">
+                    <div class="face-badge">
+                      <span class="label">Answer</span>
+                      <button id="speakAnswerBtn" class="speak-btn" title="Read Answer" aria-label="Read Answer aloud">🔊</button>
+                    </div>
+                    <p id="cardAnswer"></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Navigation Controls -->
+              <div class="card-actions">
+                <button id="prevButton" class="ghost-button">
+                  <span class="btn-icon">◀</span> Previous
+                </button>
+                <button id="flipButton" class="secondary-button flip-cta">
+                  <span class="btn-icon">🔄</span> Flip card
+                </button>
+                <button id="nextButton" class="ghost-button">
+                  Next <span class="btn-icon">▶</span>
+                </button>
+              </div>
+
+              <!-- Knowledge rating buttons -->
+              <div class="result-actions">
+                <button id="knownButton" class="success-button">✓ I knew it</button>
+                <button id="reviewButton" class="warning-button">⚠️ Need review</button>
+              </div>
+
+              <!-- Car Mode Quick Voice Command Help -->
+              <div class="voice-help-bar">
+                <span class="voice-tip-icon">💡</span>
+                <span class="voice-tip-text">Voice commands in Car Mode: <strong>"Flip"</strong> • <strong>"Next"</strong> • <strong>"Previous"</strong> • <strong>"Repeat"</strong></span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- ================= TAB 2: ADD FLASHCARDS ================= -->
+      <section id="addTab" class="tab-content">
+        <div class="add-layout">
+          <div class="panel form-panel add-card-panel">
+            <div class="panel-header">
+              <span class="panel-badge">Custom Decks</span>
+              <h2>Add New Flashcard</h2>
+              <p class="panel-subtitle">Create tailored flashcards for aircraft systems, local airspace, or instructor questions.</p>
+            </div>
+
+            <form id="cardForm">
+              <label>
+                Category
+                <select id="categoryInput" required>
+                  <option value="Pilot Qualifications & Documents">Pilot Qualifications & Documents</option>
+                  <option value="Airworthiness & Required Equipment">Airworthiness & Required Equipment</option>
+                  <option value="Weather Information & Meteorology">Weather Information & Meteorology</option>
+                  <option value="Flight Planning & Navigation">Flight Planning & Navigation</option>
+                  <option value="National Airspace System">National Airspace System</option>
+                  <option value="Performance & Aerodynamics">Performance & Aerodynamics</option>
+                  <option value="Aircraft Systems & Engine">Aircraft Systems & Engine</option>
+                  <option value="Human Factors & Aeromedical">Human Factors & Aeromedical</option>
+                  <option value="Airport Operations & Communications">Airport Operations & Communications</option>
+                  <option value="Slow Flight, Stalls, & Maneuvers">Slow Flight, Stalls, & Maneuvers</option>
+                  <option value="Emergency Procedures & Malfunctions">Emergency Procedures & Malfunctions</option>
+                  <option value="Checkride Scenarios & ADM">Checkride Scenarios & ADM</option>
+                  <option value="Custom">Custom / General</option>
+                </select>
+              </label>
+
+              <label>
+                Question
+                <textarea id="questionInput" rows="3" placeholder="e.g. What is the maximum airspeed below 10,000 feet MSL?" required></textarea>
+              </label>
+
+              <label>
+                Answer
+                <textarea id="answerInput" rows="4" placeholder="e.g. 250 knots IAS, unless otherwise authorized or required by ATC (14 CFR 91.117)." required></textarea>
+              </label>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-button save-card-btn">💾 Save card to deck</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Custom Cards Management List -->
+          <div class="panel custom-cards-panel">
+            <div class="panel-header-row">
+              <h2>Your Custom Cards (<span id="customCardCount">0</span>)</h2>
+              <button id="studyCustomOnlyBtn" class="secondary-button small-btn">Study custom cards</button>
+            </div>
+            <div id="customCardsList" class="custom-cards-list">
+              <p class="empty-custom-msg">No custom cards added yet. Fill out the form to add your own study questions!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: REMINDERS ================= -->
+      <section id="remindersTab" class="tab-content">
+        <div class="reminders-layout">
+          <div class="panel reminder-config-panel">
+            <div class="panel-header">
+              <span class="panel-badge">Study Habits</span>
+              <h2>Daily & Weekly Study Reminders</h2>
+              <p class="panel-subtitle">Get a clickable notification on your phone at your preferred time to keep checkride knowledge fresh.</p>
+            </div>
+
+            <!-- Master Toggle -->
+            <div class="toggle-card">
+              <div class="toggle-info">
+                <strong>Enable Study Notifications</strong>
+                <span>Receive scheduled reminders on your device</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="reminderEnabledToggle" />
+                <span class="slider round"></span>
+              </label>
+            </div>
+
+            <!-- Time Configuration -->
+            <div class="reminder-section">
+              <label class="field-label" for="reminderTimeInput">Reminder Time</label>
+              <div class="time-picker-row">
+                <input type="time" id="reminderTimeInput" value="09:00" class="time-input" />
+                <span class="time-help">Select the time you want the notification to appear</span>
+              </div>
+            </div>
+
+            <!-- Days of the Week Selection -->
+            <div class="reminder-section">
+              <label class="field-label">Repeat on Days</label>
+              <div class="day-picker" id="dayPicker">
+                <button type="button" class="day-chip active" data-day="1">Sun</button>
+                <button type="button" class="day-chip active" data-day="2">Mon</button>
+                <button type="button" class="day-chip active" data-day="3">Tue</button>
+                <button type="button" class="day-chip active" data-day="4">Wed</button>
+                <button type="button" class="day-chip active" data-day="5">Thu</button>
+                <button type="button" class="day-chip active" data-day="6">Fri</button>
+                <button type="button" class="day-chip active" data-day="7">Sat</button>
+              </div>
+              <div class="day-shortcuts">
+                <button type="button" id="daysAllBtn" class="shortcut-link">All Days</button>
+                <button type="button" id="daysWeekdaysBtn" class="shortcut-link">Weekdays</button>
+                <button type="button" id="daysWeekendsBtn" class="shortcut-link">Weekends</button>
+              </div>
+            </div>
+
+            <!-- Notification Preview & Custom text -->
+            <div class="reminder-section">
+              <label class="field-label">Notification Preview</label>
+              <div class="notif-preview-box">
+                <div class="notif-header">
+                  <img src="app_icon.png" class="notif-app-img" alt="Flight Flashcards" />
+                  <span class="notif-app-name">Flight Flashcards</span>
+                  <span class="notif-time" id="notifPreviewTime">09:00 AM</span>
+                </div>
+                <strong class="notif-title">Flight Flashcards Checkride Prep ✈️</strong>
+                <p class="notif-body">Time for your daily flight review! Tap to practice.</p>
+                <span class="notif-tap-hint">👆 Tapping opens the app directly</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="reminder-actions">
+              <button id="saveReminderBtn" class="primary-button">💾 Save Reminder Schedule</button>
+              <button id="testNotificationBtn" class="secondary-button">🔔 Send Test Notification Now</button>
+            </div>
+
+            <div id="reminderStatusMsg" class="reminder-status-banner">
+              Scheduled for everyday at 09:00 AM
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Toast Notification Notification Popup -->
+      <div id="toast" class="toast-popup" aria-live="polite"></div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

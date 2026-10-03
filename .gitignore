@@ -1,0 +1,56 @@
+# Built files and outputs
+build/
+**/build/
+bin/
+gen/
+out/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Gradle files and cache
+.gradle/
+**/.gradle/
+buildOutputCleanup/
+
+# Android Studio and IntelliJ IDEA
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration and environment
+local.properties
+.env
+.env.*
+
+# Signing and Keystore files
+*.jks
+*.keystore
+*.key
+*.p12
+
+# OS and Editor temporary files
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+*.log
+*.tmp
+tmp/
